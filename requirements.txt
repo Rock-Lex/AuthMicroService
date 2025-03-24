@@ -1,0 +1,21 @@
+# App
+fastapi==0.85.0
+
+# Host
+uvicorn==0.18.2
+celery
+redis
+
+# Security
+pyjwt==2.4.0
+python-dotenv==0.19.2
+
+# DB
+alembic
+sqlalchemy==2.0.39
+psycopg2-binary
+
+# Utils
+passlib==1.7.4
+loguru
+termcolor
