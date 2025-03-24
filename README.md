@@ -160,9 +160,8 @@ decoded_token = verify_access_token(token)
 ```
 
 ### Use with React Native
-1. `npm install axios react-native-keychain`
-
-2. ```
+`npm install axios react-native-keychain`
+```
    import * as Keychain from 'react-native-keychain';
    
    // Save tokens securely in keychain
