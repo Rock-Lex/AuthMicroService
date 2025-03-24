@@ -176,5 +176,4 @@ decoded_token = verify_access_token(token)
      const accessToken = await Keychain.getGenericPassword('access_token');
      const refreshToken = await Keychain.getGenericPassword('refresh_token');
      return { accessToken, refreshToken };
-   }
-```
+   } 
