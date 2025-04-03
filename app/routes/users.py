@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.models import User, AuthProviderEnum
-from app.schemas import UserCreate, UserOut, UserOutCreated
+from app.schemas import UserCreate, UserOut, UserOutCreated, UserUpdate, EmailUpdate, PasswordUpdate
 from app.database import get_db
-from app.utlis.security import create_email_confirmation_token, generate_hashed_password, generate_uuid
-from app.utlis.users_processing import get_user_by_email, process_user_creation
+from app.utlis.security import create_email_confirmation_token, generate_hashed_password, generate_uuid, verify_password
+from app.utlis.users_processing import get_user_by_email, process_user_creation, get_current_user
 from email_tasks.tasks import send_confirmation_email
 from app.config import logger
 import uuid
@@ -29,12 +29,12 @@ async def create_user(user: UserCreate, db: Session = Depends(get_db)):
 
     return db_user
 
-@router.get("/{user_uuid}", response_model=UserOut)
-async def get_user(user_uuid: uuid.UUID, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.uuid == user_uuid).first()
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found")
-    return db_user
+@router.get("", response_model=UserOut)
+async def get_user(
+    current_user: User = Depends(get_current_user)
+):
+    return current_user
+
 
 @router.get("/confirm/{token}")
 async def confirm_email(token: str, db: Session = Depends(get_db)):
@@ -47,3 +47,66 @@ async def confirm_email(token: str, db: Session = Depends(get_db)):
     db.commit()
 
     return {"type": "Success", "message": "Email confirmed successfully!"}
+
+
+@router.put("/email", response_model=UserOut)
+async def update_email(
+        email_update: EmailUpdate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    existing_user = db.query(User).filter(User.email == email_update.new_email).first()
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    current_user.email = email_update.new_email
+
+    # Optionally require re-confirmation of the new email:
+    # current_user.is_active = False
+    # current_user.confirmation_token = create_email_confirmation_token(email_update.new_email)
+
+    db.commit()
+    db.refresh(current_user)
+
+    # Optionally send a confirmation email:
+    # send_confirmation_email.delay(current_user.email, current_user.confirmation_token)
+
+    return current_user
+
+
+@router.put("/password", response_model=dict)
+async def update_password(
+        password_update: PasswordUpdate,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user)
+):
+    # Verify the current password matches the stored hash
+    if not verify_password(password_update.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Current password is incorrect")
+
+    current_user.hashed_password = generate_hashed_password(password_update.new_password)
+    db.commit()
+
+    return {"message": "Password updated successfully"}
+
+@router.put("", response_model=UserOut)
+async def update_user(
+    user_update: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    update_data = user_update.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(current_user, key, value)
+    db.commit()
+    db.refresh(current_user)
+    return current_user
+
+@router.delete("", response_model=dict)
+async def delete_user(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    db.delete(current_user)
+    db.commit()
+    return {"message": "User deleted successfully"}

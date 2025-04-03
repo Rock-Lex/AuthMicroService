@@ -9,6 +9,8 @@ redis
 # Security
 pyjwt==2.4.0
 python-dotenv==0.19.2
+cryptography
+pydantic[email]
 
 # DB
 alembic

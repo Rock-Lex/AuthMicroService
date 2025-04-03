@@ -1,10 +1,31 @@
-from fastapi import HTTPException
+from fastapi import HTTPException, Depends, status
+from sqlalchemy.orm import Session
 from app.models import User, AuthProviderEnum
 from app.utlis.security import generate_uuid, generate_hashed_password, create_email_confirmation_token
+from app.database import get_db
+from app.utlis.security import verify_token
 
 
 async def get_user_by_email(db, user_email):
     return db.query(User).filter(User.email == user_email).first()
+
+def get_current_user(
+    payload: dict = Depends(verify_token),
+    db: Session = Depends(get_db)
+) -> User:
+    user_uuid = payload.get("uuid")
+    if not user_uuid:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token payload."
+        )
+    user = db.query(User).filter(User.uuid == user_uuid).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="User not found."
+        )
+    return user
 
 
 def process_user_creation(db, user):

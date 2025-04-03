@@ -18,7 +18,7 @@ TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "email_templates/confirm
 @celery.task
 def send_confirmation_email(to_email, token):
     """Send the email confirmation with a token."""
-    EMAIL_SUBJECT_CONFIRMATION = "Confirm your email at SERVICE_NAME"
+    EMAIL_SUBJECT_CONFIRMATION = "Confirm your email at Plattr"
 
     if DEBUG:
         confirmation_link = f"http://{SERVER}:{SERVER_PORT}/auth/confirm/{token}"

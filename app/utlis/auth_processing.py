@@ -34,8 +34,8 @@ async def email_login(form_data, db):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     # Generate access and refresh tokens
-    access_token = create_access_token(user_email=user.email)
-    refresh_token = create_refresh_token(user_email=user.email)
+    access_token = create_access_token(user_email=user.email, user_uuid=user.uuid)
+    refresh_token = create_refresh_token(user_email=user.email, user_uuid=user.uuid)
 
     # Return the tokens and token type
     return {

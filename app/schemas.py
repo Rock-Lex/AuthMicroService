@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional
 import uuid
 
@@ -31,6 +31,19 @@ class UserOutCreated(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class EmailUpdate(BaseModel):
+    new_email: EmailStr
+
+class PasswordUpdate(BaseModel):
+    old_password: str
+    new_password: str
 
 class LoginForm(BaseModel):
     email: str

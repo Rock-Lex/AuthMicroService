@@ -20,7 +20,8 @@ async def refresh_token(refresh_token_request: RefreshTokenRequest):
         raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
 
     user_email = payload["sub"]
+    user_uuid = payload["uuid"]
 
-    new_access_token = create_access_token(user_email=user_email)
+    new_access_token = create_access_token(user_email=user_email,  user_uuid=user_uuid)
 
     return {"type": "Success", "access_token": new_access_token, "refresh_token": refresh_token, "token_type": "bearer"}
